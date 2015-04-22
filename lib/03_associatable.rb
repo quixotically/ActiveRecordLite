@@ -1,5 +1,6 @@
 require_relative '02_searchable'
 require 'active_support/inflector'
+require 'byebug'
 
 # Phase IIIa
 class AssocOptions
@@ -65,11 +66,27 @@ end
 module Associatable
   # Phase IIIb
   def belongs_to(name, options = {})
-    # ...
+    options = BelongsToOptions.new(name, options)
+
+    define_method(name) do
+      foreign_key = options.send(:foreign_key)
+      foreign_key_value = self.send(foreign_key)
+      model_class = options.model_class
+      primary_key = options.primary_key
+      model_class.where(primary_key => foreign_key_value).first
+    end
   end
 
   def has_many(name, options = {})
-    # ...
+    options = HasManyOptions.new(name, self.to_s, options)
+
+    define_method(name) do
+      primary_key = options.send(:primary_key)
+      primary_key_value = self.send(primary_key)
+      model_class = options.model_class
+      foreign_key = options.foreign_key
+      model_class.where(foreign_key => primary_key_value)
+    end
   end
 
   def assoc_options
