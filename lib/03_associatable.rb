@@ -21,7 +21,6 @@ end
 
 class BelongsToOptions < AssocOptions
   def initialize(name, options = {})
-    @name = name
     if options.include?(:foreign_key)
       @foreign_key = options[:foreign_key]
     else
@@ -68,23 +67,22 @@ module Associatable
   # Phase IIIb
   def belongs_to(name, options = {})
     options = BelongsToOptions.new(name, options)
+    assoc_options[name] = options
 
     define_method(name) do
-      foreign_key = options.send(:foreign_key)
+      foreign_key = options.foreign_key
       foreign_key_value = self.send(foreign_key)
       model_class = options.model_class
       primary_key = options.primary_key
       model_class.where(primary_key => foreign_key_value).first
     end
-
-    options
   end
 
   def has_many(name, options = {})
     options = HasManyOptions.new(name, self.to_s, options)
 
     define_method(name) do
-      primary_key = options.send(:primary_key)
+      primary_key = options.primary_key
       primary_key_value = self.send(primary_key)
       model_class = options.model_class
       foreign_key = options.foreign_key
@@ -93,9 +91,7 @@ module Associatable
   end
 
   def assoc_options
-    @assoc_options = {}
-    options = self.class.send(:belongs_to)
-    @assoc_options[options[:name]] = options
+    @assoc_options ||= {}
   end
 end
 
